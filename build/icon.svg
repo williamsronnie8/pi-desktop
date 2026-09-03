@@ -6,9 +6,9 @@
       <stop offset="1" stop-color="#0E1219"/>
     </linearGradient>
     <linearGradient id="accent" x1="330" y1="270" x2="710" y2="760" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#B8AEFF"/>
-      <stop offset="0.48" stop-color="#8D80F8"/>
-      <stop offset="1" stop-color="#665AD1"/>
+      <stop stop-color="#B7D7C2"/>
+      <stop offset="0.48" stop-color="#73A384"/>
+      <stop offset="1" stop-color="#4F8264"/>
     </linearGradient>
     <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%">
       <feDropShadow dx="0" dy="34" stdDeviation="42" flood-color="#000000" flood-opacity="0.42"/>
@@ -19,11 +19,11 @@
   </defs>
   <rect x="64" y="64" width="896" height="896" rx="214" fill="url(#bg)" filter="url(#shadow)"/>
   <rect x="66" y="66" width="892" height="892" rx="212" fill="none" stroke="#3A4253" stroke-width="5"/>
-  <ellipse cx="512" cy="530" rx="260" ry="112" fill="none" stroke="#8D80F8" stroke-opacity="0.22" stroke-width="28" transform="rotate(-24 512 530)" filter="url(#glow)"/>
-  <ellipse cx="512" cy="530" rx="286" ry="123" fill="none" stroke="#9B90F5" stroke-opacity="0.4" stroke-width="7" transform="rotate(-24 512 530)"/>
-  <rect x="273" y="273" width="478" height="478" rx="150" fill="#191E2A" stroke="#4A426E" stroke-width="7"/>
+  <ellipse cx="512" cy="530" rx="260" ry="112" fill="none" stroke="#4F8264" stroke-opacity="0.22" stroke-width="28" transform="rotate(-24 512 530)" filter="url(#glow)"/>
+  <ellipse cx="512" cy="530" rx="286" ry="123" fill="none" stroke="#73A384" stroke-opacity="0.4" stroke-width="7" transform="rotate(-24 512 530)"/>
+  <rect x="273" y="273" width="478" height="478" rx="150" fill="#191E2A" stroke="#385541" stroke-width="7"/>
   <rect x="294" y="294" width="436" height="436" rx="132" fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="5"/>
   <text x="512" y="655" text-anchor="middle" fill="url(#accent)" font-family="Georgia, 'Times New Roman', serif" font-size="430" font-weight="bold">π</text>
-  <circle cx="694" cy="328" r="25" fill="#69DAA7"/>
-  <circle cx="694" cy="328" r="46" fill="#69DAA7" opacity="0.14"/>
+  <circle cx="694" cy="328" r="25" fill="#83B697"/>
+  <circle cx="694" cy="328" r="46" fill="#83B697" opacity="0.14"/>
 </svg>
