@@ -1,0 +1,11 @@
+node_modules/
+out/
+release/
+build/icon.iconset/
+build/icon-master.png
+.DS_Store
+*.log
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
