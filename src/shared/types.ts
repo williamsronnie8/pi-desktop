@@ -171,6 +171,17 @@ export interface ExtensionUIRequest extends RpcEvent {
   text?: string;
 }
 
+export interface PiUpdateStatus {
+  currentVersion: string;
+  latestVersion?: string;
+  updateAvailable: boolean;
+  executable: string;
+}
+
+export interface PiUpdateResult extends PiUpdateStatus {
+  output: string;
+}
+
 export interface PiBootstrap {
   cwd: string;
   executable: string;
@@ -227,6 +238,8 @@ export interface DesktopApi {
   openPath(path: string): Promise<string>;
   revealPath(path: string): Promise<void>;
   openExternal(url: string): Promise<void>;
+  getPiUpdateStatus(): Promise<PiUpdateStatus>;
+  updatePi(): Promise<PiUpdateResult>;
   onEvent(listener: (event: RpcEvent) => void): () => void;
 }
 

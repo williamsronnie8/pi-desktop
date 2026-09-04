@@ -186,6 +186,8 @@ const mockApi: DesktopApi = {
   openPath: async () => "",
   revealPath: async () => undefined,
   openExternal: async () => undefined,
+  getPiUpdateStatus: async () => ({ currentVersion: "0.84.1", latestVersion: "0.85.0", updateAvailable: true, executable: mockBootstrap.executable }),
+  updatePi: async () => ({ currentVersion: "0.85.0", latestVersion: "0.85.0", updateAvailable: false, executable: mockBootstrap.executable, output: "Pi updated" }),
   onEvent: () => () => undefined,
 };
 

@@ -13,6 +13,8 @@ const api: DesktopApi = {
   openPath: (path: string) => ipcRenderer.invoke("system:open-path", path),
   revealPath: (path: string) => ipcRenderer.invoke("system:reveal-path", path),
   openExternal: (url: string) => ipcRenderer.invoke("system:open-external", url),
+  getPiUpdateStatus: () => ipcRenderer.invoke("pi:update-status"),
+  updatePi: () => ipcRenderer.invoke("pi:update"),
   onEvent: (listener: (event: RpcEvent) => void) => {
     const wrapped = (_event: Electron.IpcRendererEvent, value: RpcEvent): void => listener(value);
     ipcRenderer.on("pi:event", wrapped);

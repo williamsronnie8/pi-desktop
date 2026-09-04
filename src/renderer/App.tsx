@@ -7,6 +7,7 @@ import type {
   ImageAttachment,
   PiBootstrap,
   PiSessionState,
+  PiUpdateStatus,
   RpcEvent,
   RpcResponse,
   SessionStats,
@@ -61,6 +62,10 @@ export default function App() {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [piUpdateStatus, setPiUpdateStatus] = useState<PiUpdateStatus>();
+  const [checkingPiUpdate, setCheckingPiUpdate] = useState(false);
+  const [updatingPi, setUpdatingPi] = useState(false);
+  const [piUpdateError, setPiUpdateError] = useState<string>();
   const [nameDialogOpen, setNameDialogOpen] = useState(false);
   const [forkMessages, setForkMessages] = useState<Array<{ entryId: string; text: string }> | null>(null);
   const [retryEnabled, setRetryEnabled] = useState(true);
@@ -442,6 +447,41 @@ export default function App() {
     await connect(project.path);
   };
 
+  const checkPiUpdate = useCallback(async () => {
+    setCheckingPiUpdate(true);
+    setPiUpdateError(undefined);
+    try {
+      setPiUpdateStatus(await api.getPiUpdateStatus());
+    } catch (cause) {
+      setPiUpdateError(cause instanceof Error ? cause.message : String(cause));
+    } finally {
+      setCheckingPiUpdate(false);
+    }
+  }, [api]);
+
+  const updatePi = useCallback(async () => {
+    if (!bootstrap) return;
+    setUpdatingPi(true);
+    setPiUpdateError(undefined);
+    try {
+      const result = await api.updatePi();
+      setPiUpdateStatus(result);
+      pushToast(`Pi updated to ${result.currentVersion}`);
+      await connect(bootstrap.cwd, bootstrap.state.sessionFile);
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : String(cause);
+      setPiUpdateError(message);
+      pushToast(message, "error");
+      await connect(bootstrap.cwd, bootstrap.state.sessionFile);
+    } finally {
+      setUpdatingPi(false);
+    }
+  }, [api, bootstrap, connect, pushToast]);
+
+  useEffect(() => {
+    if (settingsOpen && !piUpdateStatus && !checkingPiUpdate) void checkPiUpdate();
+  }, [settingsOpen, piUpdateStatus, checkingPiUpdate, checkPiUpdate]);
+
   const settingsChange = async (setting: "autoCompaction" | "autoRetry" | "steeringMode" | "followUpMode", value: boolean | string): Promise<void> => {
     const command = setting === "autoCompaction"
       ? { type: "set_auto_compaction", enabled: value }
@@ -590,7 +630,18 @@ export default function App() {
         />
       )}
       {settingsOpen && (
-        <SettingsModal state={bootstrap.state} retryEnabled={retryEnabled} onClose={() => setSettingsOpen(false)} onChange={(setting, value) => void settingsChange(setting, value)} />
+        <SettingsModal
+          state={bootstrap.state}
+          retryEnabled={retryEnabled}
+          updateStatus={piUpdateStatus}
+          checkingUpdate={checkingPiUpdate}
+          updatingPi={updatingPi}
+          updateError={piUpdateError}
+          onCheckUpdate={() => void checkPiUpdate()}
+          onUpdatePi={() => void updatePi()}
+          onClose={() => setSettingsOpen(false)}
+          onChange={(setting, value) => void settingsChange(setting, value)}
+        />
       )}
       {nameDialogOpen && (
         <NameDialog

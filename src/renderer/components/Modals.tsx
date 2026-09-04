@@ -12,7 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import type { ExtensionUIRequest, PiSessionState, SlashCommand } from "../../shared/types";
+import type { ExtensionUIRequest, PiSessionState, PiUpdateStatus, SlashCommand } from "../../shared/types";
 
 export type LocalCommand = "new" | "rename" | "fork" | "clone" | "compact" | "export" | "settings";
 
@@ -93,10 +93,16 @@ interface SettingsModalProps {
   state: PiSessionState;
   retryEnabled: boolean;
   onClose: () => void;
+  updateStatus?: PiUpdateStatus;
+  checkingUpdate: boolean;
+  updatingPi: boolean;
+  updateError?: string;
+  onCheckUpdate: () => void;
+  onUpdatePi: () => void;
   onChange: (setting: "autoCompaction" | "autoRetry" | "steeringMode" | "followUpMode", value: boolean | string) => void;
 }
 
-export function SettingsModal({ state, retryEnabled, onClose, onChange }: SettingsModalProps) {
+export function SettingsModal({ state, retryEnabled, updateStatus, checkingUpdate, updatingPi, updateError, onCheckUpdate, onUpdatePi, onClose, onChange }: SettingsModalProps) {
   return (
     <Modal title="Session settings" subtitle="These controls apply to the active Pi runtime" onClose={onClose} className="settings-modal">
       <div className="settings-groups">
@@ -114,6 +120,28 @@ export function SettingsModal({ state, retryEnabled, onClose, onChange }: Settin
             checked={retryEnabled}
             onChange={(value) => onChange("autoRetry", value)}
           />
+        </section>
+        <section>
+          <div className="settings-section-title">Pi runtime</div>
+          <div className="setting-row update-setting">
+            <span>
+              <strong>{updateStatus ? `Pi ${updateStatus.currentVersion}` : "Pi version"}</strong>
+              <small>
+                {updateError ?? (checkingUpdate
+                  ? "Checking for updates…"
+                  : updateStatus?.updateAvailable
+                    ? `Version ${updateStatus.latestVersion} is available.`
+                    : updateStatus?.latestVersion
+                      ? "Pi is up to date."
+                      : "Check the installed Pi runtime for updates.")}
+              </small>
+            </span>
+            {updateStatus?.updateAvailable ? (
+              <button className="primary-button" disabled={updatingPi} onClick={onUpdatePi}>{updatingPi ? "Updating…" : "Update Pi"}</button>
+            ) : (
+              <button className="secondary-button" disabled={checkingUpdate || updatingPi} onClick={onCheckUpdate}>{checkingUpdate ? "Checking…" : "Check"}</button>
+            )}
+          </div>
         </section>
         <section>
           <div className="settings-section-title">Queued messages</div>

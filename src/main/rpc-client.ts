@@ -36,6 +36,10 @@ export class PiRpcClient {
     return this.executable;
   }
 
+  async resolveLaunchTarget(): Promise<PiLaunchTarget> {
+    return resolvePiLaunchTarget();
+  }
+
   async start(options: StartPiOptions): Promise<void> {
     await this.stop();
     const launchTarget = await resolvePiLaunchTarget();

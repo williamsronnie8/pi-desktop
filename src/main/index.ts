@@ -1,11 +1,15 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from "electron";
-import { join } from "node:path";
+import { execFile } from "node:child_process";
+import { delimiter, join } from "node:path";
+import { promisify } from "node:util";
 import type {
   AgentMessage,
   DesktopProject,
   PiBootstrap,
   PiModel,
   PiSessionState,
+  PiUpdateResult,
+  PiUpdateStatus,
   RpcCommand,
   RpcEvent,
   RpcResponse,
@@ -21,6 +25,7 @@ import { listSessionSummaries } from "./session-index";
 let mainWindow: BrowserWindow | null = null;
 let quitting = false;
 let sessionIndexPromise: ReturnType<typeof listSessionSummaries> | undefined;
+const execFileAsync = promisify(execFile);
 
 const rpc = new PiRpcClient((event) => {
   const window = mainWindow;
@@ -177,6 +182,18 @@ function registerIpc(): void {
   });
 
   ipcMain.handle("pi:stop", () => rpc.stop());
+  ipcMain.handle("pi:update-status", () => getPiUpdateStatus());
+  ipcMain.handle("pi:update", async (): Promise<PiUpdateResult> => {
+    await rpc.stop();
+    const target = await rpc.resolveLaunchTarget();
+    const { stdout, stderr } = await execFileAsync(target.executable, [...target.argsPrefix, "update", "--self"], {
+      env: updateEnvironment(target.pathEntries),
+      timeout: 5 * 60_000,
+      maxBuffer: 2 * 1024 * 1024,
+    });
+    const status = await getPiUpdateStatus();
+    return { ...status, output: `${stdout}${stderr}`.trim() };
+  });
   ipcMain.handle("pi:command", (_event, command: RpcCommand) => {
     if (!command || typeof command.type !== "string") throw new Error("Invalid Pi command");
     return rpc.send(command);
@@ -212,6 +229,46 @@ function registerIpc(): void {
     if (!/^https?:\/\//i.test(url)) throw new Error("Only HTTP and HTTPS links are allowed");
     return shell.openExternal(url);
   });
+}
+
+async function getPiUpdateStatus(): Promise<PiUpdateStatus> {
+  const target = await rpc.resolveLaunchTarget();
+  const { stdout } = await execFileAsync(target.executable, [...target.argsPrefix, "--version"], {
+    env: updateEnvironment(target.pathEntries),
+    timeout: 15_000,
+  });
+  const currentVersion = stdout.trim().replace(/^v/, "");
+  let latestVersion: string | undefined;
+  try {
+    const response = await fetch("https://pi.dev/api/latest-version", { signal: AbortSignal.timeout(10_000) });
+    if (response.ok) {
+      const payload = await response.json() as { version?: string };
+      latestVersion = payload.version?.replace(/^v/, "");
+    }
+  } catch {
+    // Keep the installed version visible when the update service is unavailable.
+  }
+  return {
+    currentVersion,
+    latestVersion,
+    updateAvailable: latestVersion ? compareVersions(latestVersion, currentVersion) > 0 : false,
+    executable: target.displayPath,
+  };
+}
+
+function compareVersions(left: string, right: string): number {
+  const a = left.split(/[.-]/).slice(0, 3).map((part) => Number.parseInt(part, 10) || 0);
+  const b = right.split(/[.-]/).slice(0, 3).map((part) => Number.parseInt(part, 10) || 0);
+  for (let index = 0; index < 3; index += 1) {
+    if (a[index] !== b[index]) return a[index]! - b[index]!;
+  }
+  return 0;
+}
+
+function updateEnvironment(preferred: string[]): NodeJS.ProcessEnv {
+  const defaults = ["/opt/homebrew/bin", "/usr/local/bin", "/usr/bin", "/bin", "/usr/sbin", "/sbin"];
+  const path = [...preferred, ...defaults, ...(process.env.PATH?.split(delimiter) ?? [])].filter(Boolean);
+  return { ...process.env, PATH: [...new Set(path)].join(delimiter) };
 }
 
 function responseData<T>(response: RpcResponse<T>, fallback: T): T {
